@@ -24,6 +24,12 @@ DATABASE2 = os.path.join(app.root_path, 'databases')
 NAVER_CLIENT_ID = 'your_client_id'  # 네이버 클라우드 플랫폼에서 발급받은 Client ID
 NAVER_CLIENT_SECRET = 'your_client_secret'  # 네이버 클라우드 플랫폼에서 발급받은 Client Secret
 
+# 실시간 버스 도착 정보 라우트 추가
+@app.route('/bus/<bus_number>/realtime')
+def realtime_bus_info(bus_number):
+    station_id = request.args.get('station_id')  # 클라이언트에서 전달한 정류장 ID
+    if not station_id:
+        return "정류장 ID가 필요합니다.", 400
 
 #정류장 목록 렌더링
 @app.route('/bus/<bus_number>/details') #URL 라우팅
