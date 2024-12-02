@@ -20,6 +20,10 @@ app.secret_key = 'your_secret_key'  # 세션 암호화를 위한 키
 DATABASE = os.path.join(app.root_path, 'instance', 'bus_data.db')
 DATABASE2 = os.path.join(app.root_path, 'databases')
 
+# 네이버 API 키 설정
+NAVER_CLIENT_ID = 'your_client_id'  # 네이버 클라우드 플랫폼에서 발급받은 Client ID
+NAVER_CLIENT_SECRET = 'your_client_secret'  # 네이버 클라우드 플랫폼에서 발급받은 Client Secret
+
 
 #정류장 목록 렌더링
 @app.route('/bus/<bus_number>/details') #URL 라우팅
