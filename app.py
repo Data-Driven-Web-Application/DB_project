@@ -21,8 +21,8 @@ DATABASE = os.path.join(app.root_path, 'instance', 'bus_data.db')
 DATABASE2 = os.path.join(app.root_path, 'databases')
 
 # 네이버 API 키 설정
-NAVER_CLIENT_ID = 'your_client_id'  # 네이버 클라우드 플랫폼에서 발급받은 Client ID
-NAVER_CLIENT_SECRET = 'your_client_secret'  # 네이버 클라우드 플랫폼에서 발급받은 Client Secret
+NAVER_CLIENT_ID = 'q81mthlpeb'  # 네이버 클라우드 플랫폼에서 발급받은 Client ID
+NAVER_CLIENT_SECRET = 'DGbXftynioRC5erxmgSORkIinQLlGAQpCx7PgVnr'  # 네이버 클라우드 플랫폼에서 발급받은 Client Secret
 
 # 실시간 버스 도착 정보 라우트 추가
 @app.route('/bus/<bus_number>/realtime')
@@ -30,6 +30,27 @@ def realtime_bus_info(bus_number):
     station_id = request.args.get('station_id')  # 클라이언트에서 전달한 정류장 ID
     if not station_id:
         return "정류장 ID가 필요합니다.", 400
+    
+
+        # 네이버 API 엔드포인트
+    api_url = f"https://naverapiendpoint.com/bus/realtime?station_id={station_id}&bus_number={bus_number}"
+    
+    headers = {
+        "X-Naver-Client-Id": NAVER_CLIENT_ID,
+        "X-Naver-Client-Secret": NAVER_CLIENT_SECRET
+    }
+
+    # 네이버 API 호출
+    try:
+        response = requests.get(api_url, headers=headers)
+        if response.status_code == 200:
+            bus_data = response.json()  # JSON 응답 파싱
+            return render_template('realtime_bus.html', bus_data=bus_data)
+        else:
+            return f"네이버 API 호출 실패: {response.status_code}", 500
+    except requests.RequestException as e:
+        return f"네이버 API 요청 오류: {e}", 500
+    
 
 #정류장 목록 렌더링
 @app.route('/bus/<bus_number>/details') #URL 라우팅
