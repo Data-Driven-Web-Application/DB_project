@@ -1,3 +1,4 @@
+import requests
 # Flask 웹 프레임워크에서 사용하는 필수 모듈
 # `render_template`는 HTML 템플릿 렌더링
 # `request`는 클라이언트 요청 데이터를 처리
@@ -10,8 +11,52 @@ import sqlite3
 import os
 # Flask 애플리케이션 객체를 생성
 app = Flask(__name__)
-
 app.secret_key = 'your_secret_key'  # 세션 암호화를 위한 키
+
+# API 인증키
+API_KEY = "Hs4CSBbJFx3jc51zmiL8N2R%2Fc4hkxCGyR7%2BBe11yfIpuIUsPWfoczFOk3C%2B8rwyqAfGp%2Fx0YGaN3nr4cdQkApQ%3D%3D"
+BASE_URL = "http://apis.data.go.kr/6280000/busArrivalService"
+
+@app.route('/bus/<bus_number>/realtime')
+def realtime_bus_info(bus_number):
+    # 정류장 ID와 노선 ID
+    station_id = "38378"  # 인천대학교 자연과학대학 정류장 ID
+    route_id = "165000004"  # 예시 노선 ID (수정 필요)
+
+    # 요청 파라미터 설정
+    params = {
+        "serviceKey": API_KEY,
+        "bstopId": station_id,
+        "routeId": route_id,
+        "numOfRows": 1,  # 최대 결과 수
+        "pageNo": 1      # 첫 번째 페이지
+    }
+
+    try:
+        # API 요청
+        response = requests.get(BASE_URL, params=params)
+        if response.status_code == 200:
+            # XML 응답 데이터 처리
+            from xml.etree import ElementTree as ET
+            tree = ET.fromstring(response.content)
+
+            # XML 데이터에서 필요한 정보 추출
+            item = tree.find(".//itemList")
+            if item is not None:
+                bus_data = {
+                    "arrival_time": item.findtext("ARRIVALESTIMATETIME"),
+                    "vehicle_number": item.findtext("BUS_NUM_PLATE"),
+                    "remaining_stops": item.findtext("REST_STOP_COUNT"),
+                    "last_bus": item.findtext("LASTBUSYN"),
+                    "latest_stop_name": item.findtext("LATEST_STOP_NAME")
+                }
+                return render_template('realtime_bus.html', bus_data=bus_data)
+            else:
+                return "버스 정보가 없습니다.", 404
+        else:
+            return f"API 호출 실패: {response.status_code}", 500
+    except Exception as e:
+        return f"API 요청 오류: {e}", 500
 
 
 # 데이터베이스 파일 경로 설정
@@ -20,37 +65,7 @@ app.secret_key = 'your_secret_key'  # 세션 암호화를 위한 키
 DATABASE = os.path.join(app.root_path, 'instance', 'bus_data.db')
 DATABASE2 = os.path.join(app.root_path, 'databases')
 
-# 네이버 API 키 설정
-NAVER_CLIENT_ID = 'q81mthlpeb'  # 네이버 클라우드 플랫폼에서 발급받은 Client ID
-NAVER_CLIENT_SECRET = 'DGbXftynioRC5erxmgSORkIinQLlGAQpCx7PgVnr'  # 네이버 클라우드 플랫폼에서 발급받은 Client Secret
 
-# 실시간 버스 도착 정보 라우트 추가
-@app.route('/bus/<bus_number>/realtime')
-def realtime_bus_info(bus_number):
-    station_id = request.args.get('station_id')  # 클라이언트에서 전달한 정류장 ID
-    if not station_id:
-        return "정류장 ID가 필요합니다.", 400
-    
-
-        # 네이버 API 엔드포인트
-    api_url = f"https://naverapiendpoint.com/bus/realtime?station_id={station_id}&bus_number={bus_number}"
-    
-    headers = {
-        "X-Naver-Client-Id": NAVER_CLIENT_ID,
-        "X-Naver-Client-Secret": NAVER_CLIENT_SECRET
-    }
-
-    # 네이버 API 호출
-    try:
-        response = requests.get(api_url, headers=headers)
-        if response.status_code == 200:
-            bus_data = response.json()  # JSON 응답 파싱
-            return render_template('realtime_bus.html', bus_data=bus_data)
-        else:
-            return f"네이버 API 호출 실패: {response.status_code}", 500
-    except requests.RequestException as e:
-        return f"네이버 API 요청 오류: {e}", 500
-    
 
 #정류장 목록 렌더링
 @app.route('/bus/<bus_number>/details') #URL 라우팅
