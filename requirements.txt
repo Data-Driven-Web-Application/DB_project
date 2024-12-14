@@ -1,2 +1,3 @@
 flask
 requests
+flask-babel>=3.0.0

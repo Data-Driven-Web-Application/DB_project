@@ -3,7 +3,10 @@ import requests
 # `render_template`는 HTML 템플릿 렌더링
 # `request`는 클라이언트 요청 데이터를 처리
 # `redirect`와 `url_for`는 URL 리다이렉트에 사용
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, abort
+
+import re
+from flask_babel import Babel, gettext
 
 # SQLite 데이터베이스와 상호작용하기 위한 모듈
 import sqlite3
@@ -13,7 +16,8 @@ import os
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # 세션 암호화를 위한 키
 
-# API 인증키
+
+# 공공 API 인증키
 API_KEY = "Hs4CSBbJFx3jc51zmiL8N2R%2Fc4hkxCGyR7%2BBe11yfIpuIUsPWfoczFOk3C%2B8rwyqAfGp%2Fx0YGaN3nr4cdQkApQ%3D%3D"
 BASE_URL = "http://apis.data.go.kr/6280000/busArrivalService"
 
@@ -65,6 +69,17 @@ def realtime_bus_info(bus_number):
 DATABASE = os.path.join(app.root_path, 'instance', 'bus_data.db')
 DATABASE2 = os.path.join(app.root_path, 'databases')
 
+
+# station_id 입력값 검증 함수
+def is_valid_station_id(station_id):
+    # station_id는 숫자만 포함되어야 합니다.
+    return re.fullmatch(r'\d+', station_id) is not None
+
+@app.route('/station/<station_id>/bus_info')
+def bus_info(station_id):
+    # 입력값 검증
+    if not is_valid_station_id(station_id):
+        abort(400, gettext("잘못된 정류장 ID입니다."))
 
 
 #정류장 목록 렌더링
