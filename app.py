@@ -76,7 +76,7 @@ def is_valid_station_id(station_id):
     return re.fullmatch(r'\d+', station_id) is not None
 
 @app.route('/station/<station_id>/bus_info')
-def bus_info(station_id):
+def station_bus_info(station_id):  # 함수 이름 변경 (고유한 이름으로 수정)
     # 입력값 검증
     if not is_valid_station_id(station_id):
         abort(400, gettext("잘못된 정류장 ID입니다."))
